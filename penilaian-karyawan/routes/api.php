@@ -15,7 +15,10 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:api')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/me', fn () => response()->json(auth()->user()));
+    Route::get('/me', function () {
+    \Log::info('Auth user', ['user' => auth()->user()]);
+    return response()->json(auth()->user());
+});
 
     // User Management
     Route::get('/create-user', [UserController::class, 'index']);
@@ -26,20 +29,12 @@ Route::middleware('auth:api')->group(function () {
     Route::middleware('check.departments')->post('/evaluations', [EvaluationController::class, 'store']);
 
     // Department routes
-    Route::get('/departments', fn () => response()->json([
-        'departments' => Dapartment::select('id', 'name')->get()
-    ]));
+    Route::get('/departments', [DepartmentController::class, 'index']);
 
-    Route::post('/departments', function (Request $request) {
-        $request->validate([
-            'name' => 'required|string|max:255|unique:departments,name',
-        ]);
-        $department = Dapartment::create(['name' => $request->name]);
-        return response()->json(['message' => 'Departemen ditambahkan', 'department' => $department]);
-    });
+    Route::post('/departments', [DepartmentController::class, 'store']);
 
     // Admin only routes
-    Route::middleware('role:admin')->group(function () {
+    Route::middleware('auth:api')->group(function () {
         Route::get('/admin/users', [UserController::class, 'index']);
         Route::get('/departments', [DepartmentController::class, 'index']);
         Route::post('/departments', [DepartmentController::class, 'store']);

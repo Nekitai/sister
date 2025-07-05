@@ -80,14 +80,22 @@ export const Sidebar = ({ isExpanded, setIsExpanded }) => {
             </Link>
           </li>
         )}
+        {(role === "hrd" || role === "spv") && (
+          <li>
+            <Link to="/evaluation" className="flex items-center gap-3 p-2 hover:bg-sky-500 rounded transition-all">
+              <i className="ri-edit-2-fill text-xl" />
+              {isExpanded && <span>Penilaian</span>}
+            </Link>
+          </li>
+        )}
 
         {role === "admin" && (
           <>
-          <li>
-            <Link to="/report-admin" className="flex items-center gap-3 p-2 hover:bg-sky-500 rounded transition-all">
-            <i className="ri-home-3-fill text-xl" /> {isExpanded && <span>Report</span>}
-            </Link>
-          </li>
+            <li>
+              <Link to="/report-admin" className="flex items-center gap-3 p-2 hover:bg-sky-500 rounded transition-all">
+                <i className="ri-home-3-fill text-xl" /> {isExpanded && <span>Report</span>}
+              </Link>
+            </li>
             <li>
               <Link to="/create-user" className="flex items-center gap-3 p-2 hover:bg-sky-500 rounded transition-all">
                 <i className="ri-user-add-line text-xl" />

@@ -27,7 +27,8 @@ class DepartmentController extends Controller
     {
         // Logic to retrieve and return all departments
         return response()->json([
-            'departments' => Dapartment::all()
+            'departments' => Dapartment::select('id', 'name')->get()
         ])->setStatusCode(200);
     }
+
 }

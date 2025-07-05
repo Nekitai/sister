@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { Alert } from "@mui/material";
+import Stack from "@mui/material/Stack";
 
 export const CreateUser = () => {
   const [users, setUsers] = useState([]);
@@ -14,6 +16,26 @@ export const CreateUser = () => {
   });
 
   const token = localStorage.getItem("token");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => {
+        setErrorMessage("");
+      }, 3000); // Hilangkan setelah 5 detik (5000 milidetik)
+      return () => clearTimeout(timer); // Cleanup timer jika komponen unmount atau pesan berubah
+    }
+  }, [errorMessage]); // Jalankan efek ini setiap kali errorMessage berubah
+
+  // Efek untuk successMessage
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage("");
+      }, 5000); // Hilangkan setelah 5 detik (5000 milidetik)
+      return () => clearTimeout(timer); // Cleanup timer jika komponen unmount atau pesan berubah
+    }
+  }, [successMessage]);
 
   // Ambil data users dan departemen
   // Fetch users function moved outside useEffect for reuse
@@ -71,7 +93,7 @@ export const CreateUser = () => {
         throw new Error(err.message || "Gagal tambah user");
       }
 
-      alert("User berhasil ditambahkan!");
+      setSuccessMessage("User berhasil ditambahkan!");
       setForm({
         name: "",
         email: "",
@@ -82,7 +104,7 @@ export const CreateUser = () => {
         department_id: "",
       });
     } catch (error) {
-      alert("Gagal menambahkan user: " + error.message);
+      setErrorMessage("Gagal menambahkan user: " + error.message);
     }
   };
   const handleDelete = async (id) => {
@@ -101,17 +123,30 @@ export const CreateUser = () => {
         throw new Error(err.message || "Gagal menghapus user");
       }
 
-      alert("User berhasil dihapus!");
+      setSuccessMessage("User berhasil dihapus!");
       fetchUsers(); // error
     } catch (error) {
-      alert("Gagal menghapus user: " + error.message);
+      setErrorMessage("Gagal menghapus user: " + error.message);
     }
   };
 
   return (
     <div className="p-6 w-full">
+      {errorMessage && (
+        <Stack sx={{ width: "100%" }} spacing={2} className="mb-4">
+          <Alert variant="filled" severity="error" onClose={() => setErrorMessage("")}>
+            {errorMessage}
+          </Alert>
+        </Stack>
+      )}
+      {successMessage && (
+        <Stack sx={{ width: "100%" }} spacing={2} className="mb-4">
+          <Alert variant="filled" severity="success" onClose={() => setSuccessMessage("")}>
+            {successMessage}
+          </Alert>
+        </Stack>
+      )}
       <h2 className="text-2xl font-bold mb-4">Manajemen Pengguna</h2>
-
       {/* FORM TAMBAH USER */}
       <form onSubmit={handleSubmit} className="space-y-4 bg-gray-100 p-4 rounded mb-6">
         <div>
@@ -166,8 +201,8 @@ export const CreateUser = () => {
             <th className="border px-4 py-2">Nama</th>
             <th className="border px-4 py-2">Email</th>
             <th className="border px-4 py-2">Username</th>
-            <th className="border px-4 py-2">Devisi</th>
             <th className="border px-4 py-2">Role</th>
+            <th className="border px-4 py-2">Deparment</th>
             <th className="border px-4 py-2">Aksi</th>
           </tr>
         </thead>

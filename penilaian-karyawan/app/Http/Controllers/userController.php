@@ -43,12 +43,37 @@ class userController extends Controller
             'role' => $request->role
         ], 201);
     }
-    public function index()
+        public function index(Request $request)
     {
-        // Ambil semua user
-        $users = User::with('department')->get();
-
-        // Kembalikan response dengan data user
+        $user = auth()->user(); // user yang sedang login
+    
+        // Jika Supervisor → hanya lihat karyawan di divisinya
+        if ($user->role === 'spv') {
+            $users = User::with('department')
+                         ->where('department_id', $user->department_id)
+                         ->where('role', 'karyawan')
+                         ->get();
+        }
+    
+        // Jika HRD → lihat semua karyawan & supervisor dari semua divisi
+        elseif ($user->role === 'hrd') {
+            $users = User::with('department')
+                         ->whereIn('role', ['karyawan', 'spv'])
+                         ->get();
+        }
+    
+        // Jika admin → lihat semua (boleh diatur ulang jika perlu)
+        elseif ($user->role === 'admin') {
+            $users = User::with('department')->get();
+        }
+    
+        // Role lainnya tidak diizinkan
+        else {
+            return response()->json([
+                'message' => 'Unauthorized'
+            ], 403);
+        }
+    
         return response()->json([
             'users' => $users,
         ], 200);

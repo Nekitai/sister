@@ -7,11 +7,15 @@ import { Unauthorized } from "./pages/Unauthorized";
 import { CreateUser } from "./pages/CreateUser";
 import { AdminReport } from "./pages/AdminReport";
 import { DepartmentList } from "./pages/DepartmentList";
+import { EvaluationForm } from "./pages/Evaluations";
+import { CircularProgress } from "@mui/material";
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
+
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -23,25 +27,34 @@ function App() {
         },
       })
         .then((res) => {
-          if (!res.ok) throw new Error();
+          if (!res.ok) throw new Error("Gagal fetch user");
           return res.json();
         })
         .then((data) => {
-          setIsAuthenticated(true);
           setUser(data);
+          setIsAuthenticated(true);
         })
         .catch(() => {
           setIsAuthenticated(false);
           setUser(null);
-        });
+          localStorage.removeItem("token");
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
   }, []);
 
-  const isAdmin = user?.role === "admin";
-  if (isAuthenticated && user === null) {
-    // loading dulu sebelum user siap
-    return <div className="p-6 text-center">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <CircularProgress />
+        <p className="ml-2">Checking Session......</p>
+      </div>
+    );
   }
+
+  const isAdmin = user && user.role === "admin";
 
   return (
     <Routes>
@@ -51,16 +64,13 @@ function App() {
           isAuthenticated && user ? (
             <div className="flex w-full">
               <Sidebar isExpanded={isSidebarOpen} setIsExpanded={setIsSidebarOpen} user={user} />
-              <div className={`flex-1 p-6 ${isSidebarOpen ? "ml-64" : "ml-20"} transition-all duration-300`}>
-                {user.role === "admin" ? <AdminReport /> : <Report />}
-              </div>
+              <div className={`flex-1 p-6 ${isSidebarOpen ? "ml-64" : "ml-20"} transition-all duration-300`}>{user.role === "admin" ? <AdminReport /> : <Report />}</div>
             </div>
           ) : (
             <Navigate to="/login" replace />
           )
         }
       />
-
       <Route
         path="/create-user"
         element={
@@ -88,7 +98,6 @@ function App() {
               <div className={`flex-1 p-6 ${isSidebarOpen ? "ml-64" : "ml-20"} transition-all duration-300`}>
                 <DepartmentList />
               </div>
-              
             </div>
           ) : isAuthenticated ? (
             <Navigate to="/unauthorized" />
@@ -97,7 +106,38 @@ function App() {
           )
         }
       />
-
+      <Route
+        path="/report"
+        element={
+          isAuthenticated && user ? (
+            <div className="flex">
+              <Sidebar isExpanded={isSidebarOpen} setIsExpanded={setIsSidebarOpen} user={user} />
+              <div className={`flex-1 p-6 ${isSidebarOpen ? "ml-64" : "ml-20"} transition-all duration-300`}>
+                <Report />
+              </div>
+            </div>
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/evaluation"
+        element={
+          isAuthenticated && (user?.role === "spv" || user?.role === "hrd") ? (
+            <div className="flex">
+              <Sidebar isExpanded={isSidebarOpen} setIsExpanded={setIsSidebarOpen} user={user} />
+              <div className={`flex-1 p-6 ${isSidebarOpen ? "ml-64" : "ml-20"} transition-all duration-300`}>
+                <EvaluationForm />
+              </div>
+            </div>
+          ) : isAuthenticated ? (
+            <Navigate to="/unauthorized" />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
       <Route path="/unauthorized" element={<Unauthorized />} />
       <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
       <Route path="/" element={<Navigate to="/login" replace />} />

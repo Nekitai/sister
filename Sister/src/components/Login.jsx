@@ -1,15 +1,21 @@
-import React from "react";
-import { useNavigate } from "react-router-dom"; 
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Alert from "@mui/material/Alert";
+import Stack from "@mui/material/Stack";
+import { CheckIcon } from "@heroicons/react/16/solid";
 
 export const Login = ({ setIsAuthenticated }) => {
   const navigate = useNavigate();
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
   const handleLogin = async () => {
     try {
-      const identifier = document.getElementById("email").value.trim(); // bisa email atau username
+      const identifier = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
 
       if (!identifier || !password) {
-        alert("Email/Username dan Password wajib diisi");
+        setErrorMessage("Email dan password harus diisi.");
         return;
       }
 
@@ -24,25 +30,39 @@ export const Login = ({ setIsAuthenticated }) => {
           password,
         }),
       });
+
       const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Login gagal");
+        throw new Error(data.message || "Login gagal");
       }
 
-      // Simpan token ke localStorage
-      localStorage.setItem("token", data.access_token);
+      const token = data.access_token;
+      localStorage.setItem("token", token);
 
-      // Redirect ke dashboard
+      // 🔥 Ambil data user untuk tahu role-nya
+      const userRes = await fetch("http://127.0.0.1:8000/api/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+
+      const userData = await userRes.json();
+
+      localStorage.setItem("role", userData.role); // simpan role ke localStorage
+
       setIsAuthenticated(true);
-      if (data.role === "admin") {
+
+      if (userData.role === "admin") {
         navigate("/report-admin");
       } else {
         navigate("/report");
       }
-      alert("Login berhasil!");
+
+      setSuccessMessage("Login berhasil!");
     } catch (error) {
-      alert("Login gagal: " + error.message);
+      setErrorMessage("Login gagal: " + error.message);
       console.error("Login error:", error);
     }
   };
@@ -50,8 +70,17 @@ export const Login = ({ setIsAuthenticated }) => {
   return (
     <div className="container max-w-sm mx-auto min-h-screen flex items-center justify-center">
       <div className="bg-sky-600 bg shadow-md rounded-md px-8 py-9 w-full">
-        <h2 className="text-4xl font-bold text-center text-white mb-7 ">Login</h2>
-
+        {errorMessage && (
+          <Stack sx={{ width: "100%" }} spacing={2} className="mb-4">
+            <Alert variant="filled" severity="error" onClose={() => setErrorMessage("")}>{errorMessage}</Alert>
+          </Stack>)}
+          {
+            successMessage && (
+              <Stack sx={{ width: "100%" }} spacing={2} className="mb-4">
+                <Alert iconMapping={{ success: <CheckIcon fontSize="inherit" /> }} variant="filled" severity="success" onClose={() => setSuccessMessage("")}>{successMessage}</Alert>
+              </Stack>)
+          }
+        <h2 className="text-4xl font-bold text-center text-white mb-7">Login</h2>
         {/* Email */}
         <div className="mb-4 font-medium">
           <label htmlFor="email" className="block text-gray-700 mb-2">
