@@ -71,11 +71,52 @@ class EvaluationController extends Controller
             'notes' => $request->notes,
         ]);
 
-
-
         // Kembalikan response sukses
         return response()->json(['message' => 'Evaluation saved successfully',
             'data' => $evaluation],
         201);
+
     }
+    public function summary()
+{
+    $user = auth()->user();
+
+    // Ambil semua evaluasi user ini, urutkan dari terbaru
+    $evaluations = Evaluation::where('employee_id', $user->id)
+        ->orderByDesc('month')
+        ->get();
+
+    if ($evaluations->isEmpty()) {
+        return response()->json([
+            'latest_score' => null,
+            'monthly_scores' => [],
+        ]);
+    }
+
+    // Ambil nilai terbaru
+    $latest = $evaluations->first();
+    $latestScore = $latest->final_score;
+
+    // Buat data bulanan 12 bulan
+    $months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    $monthlyScores = [];
+
+    foreach ($months as $index => $monthLabel) {
+        $monthNumber = str_pad($index + 1, 2, '0', STR_PAD_LEFT); // 01, 02, ...
+        $year = date('Y'); // atau ambil dari latest->month
+        $monthString = "$year-$monthNumber";
+
+        $eval = $evaluations->firstWhere('month', $monthString);
+        $monthlyScores[] = [
+            'month' => $monthLabel,
+            'score' => $eval ? $eval->final_score : 0
+        ];
+    }
+
+    return response()->json([
+        'latest_score' => $latestScore,
+        'monthly_scores' => $monthlyScores,
+    ]);
+}
+
 }

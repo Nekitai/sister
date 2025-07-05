@@ -1,21 +1,20 @@
-import React, { useEffect, useRef } from "react"; // tambahkan useRef dan useEffect
-import { Link } from "react-router-dom";
-import "remixicon/fonts/remixicon.css";
-import { useNavigate } from "react-router-dom"; // import useNavigate untuk navigasi
+import React, { useEffect, useRef, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Menu, X, Home, FileText, Users, Building, Settings, LogOut, Edit, UserPlus, BarChart3 } from "lucide-react";
 
 export const Sidebar = ({ isExpanded, setIsExpanded }) => {
   const navigate = useNavigate();
-  const handleLogout = async () => {
-    // hanya jika digunakan di dalam komponen
+  const location = useLocation();
+  const sidebarRef = useRef(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const role = localStorage.getItem("role");
 
+  const handleLogout = async () => {
+    setIsLoading(true);
     try {
       const token = localStorage.getItem("token");
+      if (!token) throw new Error("Token tidak ditemukan.");
 
-      if (!token) {
-        throw new Error("Token tidak ditemukan.");
-      }
-
-      // Panggil endpoint logout ke Laravel
       const response = await fetch("http://127.0.0.1:8000/api/logout", {
         method: "POST",
         headers: {
@@ -26,22 +25,17 @@ export const Sidebar = ({ isExpanded, setIsExpanded }) => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Gagal logout dari server");
+        throw new Error(errorData.message || "Gagal logout");
       }
 
-      // Bersihkan token di localStorage
       localStorage.removeItem("token");
-
-      // Redirect ke halaman login
       navigate("/login");
     } catch (error) {
-      console.error("Logout error:", error.message);
       alert("Logout gagal: " + error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  const sidebarRef = useRef(null);
-  const role = localStorage.getItem("role");
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -53,95 +47,98 @@ export const Sidebar = ({ isExpanded, setIsExpanded }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [setIsExpanded]);
 
+  const menuItems = [
+    ...(role !== "admin" ? [{ path: "/report", icon: Home, label: "Report", color: "text-blue-300" }] : []),
+    ...(role === "hrd" || role === "spv" ? [{ path: "/evaluation", icon: Edit, label: "Penilaian", color: "text-green-300" }] : []),
+    ...(role === "admin"
+      ? [
+          { path: "/report-admin", icon: BarChart3, label: "Report", color: "text-blue-300" },
+          { path: "/create-user", icon: UserPlus, label: "Create User", color: "text-purple-300" },
+          { path: "/departments", icon: Building, label: "Departments", color: "text-orange-300" },
+        ]
+      : []),
+    { path: "/laporan", icon: FileText, label: "Laporan", color: "text-yellow-300" },
+    { path: "/setting", icon: Settings, label: "Pengaturan", color: "text-gray-300" },
+  ];
+
+  const isActiveRoute = (path) => location.pathname === path;
+
   return (
-    <div
-      ref={sidebarRef}
-      className={`fixed pt-20 bottom-5 top-2 left-5 h-screen bg-sky-400 text-white shadow-xl shadow-sky-400 transition-all duration-500 ease-in-out flex flex-col justify-between ${
-        isExpanded ? "w-60 px-6" : "w-16 px-3"
-      } py-4 z-50 rounded-4xl`}
-    >
-      {/* Logo dan tombol toggle */}
-      <div className="flex items-center justify-between mb-8">
-        {isExpanded && <h1 className="text-xl font-bold">LOGO</h1>}
-        {!isExpanded && (
-          <button onClick={() => setIsExpanded(true)} className="text-2xl p-2" title="Buka Sidebar">
-            <i className="ri-menu-3-fill" />
+    <>
+      {isExpanded && <div className="fixed inset-0 backdrop-blur-sm z-40 lg:hidden bg-black/80" onClick={() => setIsExpanded(false)} />}
+
+      <div ref={sidebarRef} className={`fixed top-0 left-0 h-screen bg-slate-900/95 backdrop-blur-xl border-r border-white/10 text-white shadow-2xl transition-all duration-300 flex flex-col z-50 ${isExpanded ? "w-72" : "w-16"}`}>
+        {/* Header / Logo */}
+        <div className="bg-slate-800/50 backdrop-blur-sm p-4 border-b border-white/10">
+          {isExpanded ? (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                  <span className="text-xl font-bold text-white">L</span>
+                </div>
+                <div>
+                  <h1 className="text-lg font-bold text-white">LOGO</h1>
+                  <p className="text-xs text-blue-100/70">Penilaian Karyawan</p>
+                </div>
+              </div>
+              <button onClick={() => setIsExpanded(!isExpanded)} className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors duration-200">
+                <X className="w-5 h-5 text-white" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center space-y-2">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <span className="text-xl font-bold text-white">L</span>
+              </div>
+              <button onClick={() => setIsExpanded(!isExpanded)} className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors duration-200">
+                <Menu className="w-5 h-5 text-white" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Menu Items */}
+        <nav className="flex-1 p-4 space-y-2">
+          {menuItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = isActiveRoute(item.path);
+            return (
+              <a
+                key={item.path}
+                href={item.path}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(item.path);
+                }}
+                className={`flex items-center gap-3 p-3 rounded-xl transition-all duration-200 group relative border ${
+                  isActive ? "bg-blue-600/20 border-blue-500/30 shadow-lg" : "bg-slate-800/50 hover:bg-slate-700/50 border-slate-600/30 hover:border-slate-500/50"
+                }`}
+              >
+                <Icon className={`${isExpanded ? "w-5 h-5" : "w-6 h-6"} ${isActive ? "text-blue-300" : item.color}`} />
+                {isExpanded && <span className={`font-medium ${isActive ? "text-blue-300" : "text-white"}`}>{item.label}</span>}
+                {isActive && <div className="absolute right-3 w-2 h-2 bg-blue-400 rounded-full shadow-lg" />}
+              </a>
+            );
+          })}
+        </nav>
+
+        {/* Logout Button */}
+        <div className="p-4 border-t border-white/10">
+          <button
+            onClick={handleLogout}
+            disabled={isLoading}
+            className="w-full flex items-center gap-3 p-3 rounded-xl transition-all duration-200 bg-slate-800/50 hover:bg-red-500/20 border border-slate-600/30 hover:border-red-500/50 group"
+          >
+            {isLoading ? <div className="w-5 h-5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" /> : <LogOut className={`${isExpanded ? "w-5 h-5" : "w-6 h-6"} text-red-300 group-hover:text-red-200`} />}
+            {isExpanded && <span className="font-medium text-red-300 group-hover:text-red-200">{isLoading ? "Logging out..." : "Logout"}</span>}
           </button>
+        </div>
+         {isExpanded && ( 
+          <div className="text-xs text-center p-2">
+            <p className="text-xs text-blue-100/70">Thank for ChatGpt And Claude.ai</p>
+          </div>
         )}
       </div>
-
-      {/* Menu */}
-      <ul className="space-y-4 flex-1">
-        {role !== "admin" && (
-          <li>
-            <Link to="/report" className="flex items-center gap-3 p-2 hover:bg-sky-500 rounded transition-all">
-              <i className="ri-home-3-fill text-xl" />
-              {isExpanded && <span>Report</span>}
-            </Link>
-          </li>
-        )}
-        {(role === "hrd" || role === "spv") && (
-          <li>
-            <Link to="/evaluation" className="flex items-center gap-3 p-2 hover:bg-sky-500 rounded transition-all">
-              <i className="ri-edit-2-fill text-xl" />
-              {isExpanded && <span>Penilaian</span>}
-            </Link>
-          </li>
-        )}
-
-        {role === "admin" && (
-          <>
-            <li>
-              <Link to="/report-admin" className="flex items-center gap-3 p-2 hover:bg-sky-500 rounded transition-all">
-                <i className="ri-home-3-fill text-xl" /> {isExpanded && <span>Report</span>}
-              </Link>
-            </li>
-            <li>
-              <Link to="/create-user" className="flex items-center gap-3 p-2 hover:bg-sky-500 rounded transition-all">
-                <i className="ri-user-add-line text-xl" />
-                {isExpanded && <span>Create User</span>}
-              </Link>
-            </li>
-            <li>
-              <Link to="/departments" className="flex items-center gap-3 p-2 hover:bg-sky-500 rounded transition-all">
-                <i className="ri-building-line text-xl" />
-                {isExpanded && <span>Departments</span>}
-              </Link>
-            </li>
-          </>
-        )}
-
-        <li>
-          <div className="flex items-center gap-3 p-2 hover:bg-sky-500 rounded transition-all cursor-pointer">
-            <i className="ri-file-list-3-line text-xl" />
-            {isExpanded && <span>Laporan</span>}
-          </div>
-        </li>
-
-        <li>
-          <div className="flex items-center gap-3 p-2 hover:bg-sky-500 rounded transition-all cursor-pointer">
-            <i className="ri-settings-3-fill text-xl" />
-            {isExpanded && <span>Pengaturan</span>}
-          </div>
-        </li>
-
-        <li>
-          <div className="flex items-center gap-3 p-2 hover:bg-sky-500 rounded transition-all cursor-pointer" onClick={handleLogout}>
-            <i className="ri-logout-box-r-line text-xl" />
-            {isExpanded && <span>Logout</span>}
-          </div>
-        </li>
-      </ul>
-
-      {/* Footer Sosmed */}
-      {isExpanded && (
-        <div className="flex justify-around mt-6">
-          <i className="ri-facebook-fill text-2xl hover:opacity-75 cursor-pointer" />
-          <i className="ri-twitter-fill text-2xl hover:opacity-75 cursor-pointer" />
-          <i className="ri-instagram-fill text-2xl hover:opacity-75 cursor-pointer" />
-          <i className="ri-linkedin-fill text-2xl hover:opacity-75 cursor-pointer" />
-        </div>
-      )}
-    </div>
+    </>
   );
 };

@@ -31,4 +31,30 @@ class DepartmentController extends Controller
         ])->setStatusCode(200);
     }
 
+    public function delete($id)
+{
+    $department = Dapartment::find($id);
+
+    if (!$department) {
+        return response()->json(['message' => 'Department not found'], 404);
+    }
+
+    $department->delete();
+
+    return response()->json(['message' => 'Department deleted successfully'], 200);
+}
+
+public function update(Request $request, $id)
+{
+    $department = Dapartment::find($id);
+
+    if (!$department) {
+        return response()->json(['message' => 'Department not found'], 404);
+    }
+
+    $department->update($request->all());
+
+    return response()->json(['message' => 'Department updated successfully', 'department' => $department], 200);
+
+}
 }

@@ -15,6 +15,7 @@ class Evaluation extends Model
         'teamwork',
         'field_score',
         'final_score',
+        'month',        
         'notes', // Tambahkan kolom notes
     ];
 

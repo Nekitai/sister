@@ -1,6 +1,22 @@
 import React, { useEffect, useState } from "react";
-import { Alert } from "@mui/material";
-import Stack from "@mui/material/Stack";
+import { 
+  UserPlus, 
+  Users, 
+  Mail, 
+  User, 
+  Lock, 
+  Shield, 
+  Building, 
+  Edit3, 
+  Trash2, 
+  UserCheck,
+  AlertCircle,
+  CheckCircle,
+  Plus
+} from "lucide-react";
+
+// Mock data untuk demo
+
 
 export const CreateUser = () => {
   const [users, setUsers] = useState([]);
@@ -15,69 +31,84 @@ export const CreateUser = () => {
     department_id: "",
   });
 
-  const token = localStorage.getItem("token");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  // Auto-hide messages
   useEffect(() => {
     if (errorMessage) {
-      const timer = setTimeout(() => {
-        setErrorMessage("");
-      }, 3000); // Hilangkan setelah 5 detik (5000 milidetik)
-      return () => clearTimeout(timer); // Cleanup timer jika komponen unmount atau pesan berubah
+      const timer = setTimeout(() => setErrorMessage(""), 3000);
+      return () => clearTimeout(timer);
     }
-  }, [errorMessage]); // Jalankan efek ini setiap kali errorMessage berubah
+  }, [errorMessage]);
 
-  // Efek untuk successMessage
   useEffect(() => {
     if (successMessage) {
-      const timer = setTimeout(() => {
-        setSuccessMessage("");
-      }, 5000); // Hilangkan setelah 5 detik (5000 milidetik)
-      return () => clearTimeout(timer); // Cleanup timer jika komponen unmount atau pesan berubah
+      const timer = setTimeout(() => setSuccessMessage(""), 5000);
+      return () => clearTimeout(timer);
     }
   }, [successMessage]);
 
-  // Ambil data users dan departemen
-  // Fetch users function moved outside useEffect for reuse
-  const fetchUsers = React.useCallback(async () => {
-    try {
-      const res = await fetch("http://127.0.0.1:8000/api/create-user", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
-      console.log("Data dari API:", data);
-      setUsers(data.users || data.data || []);
-    } catch (error) {
-      console.error("Gagal mengambil data user:", error);
-    }
-  }, [token]);
+  // Fetch users function
+  
 
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
+        const token = localStorage.getItem("token");
         const res = await fetch("http://127.0.0.1:8000/api/departments", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
         setDepartments(data.departments || data);
+        
       } catch (error) {
         console.error("Gagal mengambil data departemen:", error);
       }
     };
-
-    fetchUsers();
     fetchDepartments();
-  }, [token, fetchUsers]);
+  }, []);
 
-  // Handle input perubahan form
+  // Handle input changes
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Submit form tambah user
+  // Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validasi password
+    if (form.password !== form.password_confirmation) {
+      setErrorMessage("Password dan konfirmasi password tidak cocok!");
+      return;
+    }
+
     try {
+      // Simulasi untuk demo
+      const newUser = {
+        id: users.length + 1,
+        name: form.name,
+        email: form.email,
+        username: form.username,
+        role: form.role,
+        department: departments.find(d => d.id === parseInt(form.department_id))
+      };
+      
+      setUsers([...users, newUser]);
+      setSuccessMessage("User berhasil ditambahkan!");
+      setForm({
+        name: "",
+        email: "",
+        username: "",
+        password: "",
+        password_confirmation: "",
+        role: "",
+        department_id: "",
+      });
+
+      
+      const token = localStorage.getItem("token");
       const res = await fetch("http://127.0.0.1:8000/api/create-user", {
         method: "POST",
         headers: {
@@ -107,133 +138,190 @@ export const CreateUser = () => {
       setErrorMessage("Gagal menambahkan user: " + error.message);
     }
   };
-  const handleDelete = async (id) => {
-    try {
-      const res = await fetch(`http://127.0.0.1:8000/api/users/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || "Gagal menghapus user");
-      }
-
-      setSuccessMessage("User berhasil dihapus!");
-      fetchUsers(); // error
-    } catch (error) {
-      setErrorMessage("Gagal menghapus user: " + error.message);
-    }
-  };
-
   return (
-    <div className="p-6 w-full">
-      {errorMessage && (
-        <Stack sx={{ width: "100%" }} spacing={2} className="mb-4">
-          <Alert variant="filled" severity="error" onClose={() => setErrorMessage("")}>
-            {errorMessage}
-          </Alert>
-        </Stack>
-      )}
-      {successMessage && (
-        <Stack sx={{ width: "100%" }} spacing={2} className="mb-4">
-          <Alert variant="filled" severity="success" onClose={() => setSuccessMessage("")}>
-            {successMessage}
-          </Alert>
-        </Stack>
-      )}
-      <h2 className="text-2xl font-bold mb-4">Manajemen Pengguna</h2>
-      {/* FORM TAMBAH USER */}
-      <form onSubmit={handleSubmit} className="space-y-4 bg-gray-100 p-4 rounded mb-6">
-        <div>
-          <label className="block font-medium mb-1">Nama</label>
-          <input type="text" name="name" value={form.name} onChange={handleChange} required className="w-full border px-3 py-2 rounded" />
-        </div>
-        <div>
-          <label className="block font-medium mb-1">Email</label>
-          <input type="email" name="email" value={form.email} onChange={handleChange} required className="w-full border px-3 py-2 rounded" />
-        </div>
-        <div>
-          <label className="block font-medium mb-1">Username</label>
-          <input type="text" name="username" value={form.username} onChange={handleChange} required className="w-full border px-3 py-2 rounded" />
-        </div>
-        <div>
-          <label className="block font-medium mb-1">Password</label>
-          <input type="password" name="password" value={form.password} onChange={handleChange} required className="w-full border px-3 py-2 rounded" />
-        </div>
-        <div>
-          <label className="block font-medium mb-1">Password Confirmation</label>
-          <input type="password" name="password_confirmation" value={form.password_confirmation} onChange={handleChange} required className="w-full border px-3 py-2 rounded" />
-        </div>
-        <div>
-          <label className="block font-medium mb-1">Role</label>
-          <select name="role" value={form.role} onChange={handleChange} required className="w-full border px-3 py-2 rounded">
-            <option value="">-- Pilih Role --</option>
-            <option value="hrd">HRD</option>
-            <option value="spv">Supervisor</option>
-            <option value="karyawan">Karyawan</option>
-          </select>
-        </div>
-        <div>
-          <label className="block font-medium mb-1">Departemen</label>
-          <select name="department_id" value={form.department_id} onChange={handleChange} className="w-full border px-3 py-2 rounded">
-            <option value="">-- Pilih Departemen --</option>
-            {departments.map((dept) => (
-              <option key={dept.id} value={dept.id}>
-                {dept.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button type="submit" className="bg-sky-500 text-white px-4 py-2 rounded" onClick={handleSubmit}>
-          + Tambah User
-        </button>
-      </form>
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 p-6">
+      <div className="w-full max-w-7xl mx-auto space-y-6">
+        {/* Alert Messages */}
+        {errorMessage && (
+          <div className="bg-red-500/10 backdrop-blur-xl rounded-2xl border border-red-500/20 p-4">
+            <div className="flex items-center space-x-3">
+              <AlertCircle className="w-5 h-5 text-red-400" />
+              <span className="text-red-300">{errorMessage}</span>
+            </div>
+          </div>
+        )}
+        
+        {successMessage && (
+          <div className="bg-green-500/10 backdrop-blur-xl rounded-2xl border border-green-500/20 p-4">
+            <div className="flex items-center space-x-3">
+              <CheckCircle className="w-5 h-5 text-green-400" />
+              <span className="text-green-300">{successMessage}</span>
+            </div>
+          </div>
+        )}
 
-      {/* TABEL USER YANG SUDAH ADA */}
-      <table className="min-w-full bg-white border rounded shadow-2xl text-center">
-        <thead>
-          <tr className="bg-sky-500 text-white border-2">
-            <th className="border px-4 py-2">Nama</th>
-            <th className="border px-4 py-2">Email</th>
-            <th className="border px-4 py-2">Username</th>
-            <th className="border px-4 py-2">Role</th>
-            <th className="border px-4 py-2">Deparment</th>
-            <th className="border px-4 py-2">Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.filter((user) => user.role !== "admin").length > 0 ? (
-            users
-              .filter((user) => user.role !== "admin")
-              .map((user, index) => (
-                <tr key={user.id} className="border-b">
-                  <td className="px-4 py-2 text-center">{index + 1}</td>
-                  <td className="px-4 py-2">{user.name}</td>
-                  <td className="px-4 py-2">{user.username}</td>
-                  <td className="px-4 py-2">{user.role}</td>
-                  <td className="px-4 py-2">{user.department?.name || "-"}</td>
-                  <td className="px-4 py-2">
-                    <button className="text-blue-600 hover:underline mr-2">Edit</button>
-                    <button className="text-red-600 hover:underline" onClick={() => handleDelete(user.id)}>
-                      Hapus
-                    </button>
-                  </td>
-                </tr>
-              ))
-          ) : (
-            <tr>
-              <td className="border px-4 py-2 text-center" colSpan={6}>
-                Tidak ada data user.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+        {/* Header */}
+        <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8">
+          <div className="flex items-center space-x-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center">
+              <UserPlus className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-white mb-2">Manajemen Pengguna</h1>
+              <p className="text-blue-100/70">Tambah dan kelola pengguna sistem</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Form Card */}
+        <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 p-8">
+          <div className="flex items-center space-x-3 mb-6">
+            <Plus className="w-6 h-6 text-white" />
+            <h2 className="text-xl font-semibold text-white">Tambah Pengguna Baru</h2>
+          </div>
+          
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Name Field */}
+              <div>
+                <label className="text-white/80 font-medium mb-2 flex items-center space-x-2">
+                  <User className="w-4 h-4" />
+                  <span>Nama</span>
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  required
+                  className="w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200"
+                  placeholder="Masukkan nama lengkap"
+                />
+              </div>
+
+              {/* Email Field */}
+              <div>
+                <label className="text-white/80 font-medium mb-2 flex items-center space-x-2">
+                  <Mail className="w-4 h-4" />
+                  <span>Email</span>
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                  className="w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200"
+                  placeholder="user@example.com"
+                />
+              </div>
+
+              {/* Username Field */}
+              <div>
+                <label className="text-white/80 font-medium mb-2 flex items-center space-x-2">
+                  <User className="w-4 h-4" />
+                  <span>Username</span>
+                </label>
+                <input
+                  type="text"
+                  name="username"
+                  value={form.username}
+                  onChange={handleChange}
+                  required
+                  className="w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200"
+                  placeholder="username"
+                />
+              </div>
+
+              {/* Role Field */}
+              <div>
+                <label className="text-white/80 font-medium mb-2 flex items-center space-x-2">
+                  <Shield className="w-4 h-4" />
+                  <span>Role</span>
+                </label>
+                <select
+                  name="role"
+                  value={form.role}
+                  onChange={handleChange}
+                  required
+                  className="w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200"
+                >
+                  <option value="" className="bg-gray-800">-- Pilih Role --</option>
+                  <option value="hrd" className="bg-gray-800">HRD</option>
+                  <option value="spv" className="bg-gray-800">Supervisor</option>
+                  <option value="karyawan" className="bg-gray-800">Karyawan</option>
+                </select>
+              </div>
+
+              {/* Password Field */}
+              <div>
+                <label className="text-white/80 font-medium mb-2 flex items-center space-x-2">
+                  <Lock className="w-4 h-4" />
+                  <span>Password</span>
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                  className="w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200"
+                  placeholder="••••••••"
+                />
+              </div>
+
+              {/* Password Confirmation Field */}
+              <div>
+                <label className="text-white/80 font-medium mb-2 flex items-center space-x-2">
+                  <Lock className="w-4 h-4" />
+                  <span>Konfirmasi Password</span>
+                </label>
+                <input
+                  type="password"
+                  name="password_confirmation"
+                  value={form.password_confirmation}
+                  onChange={handleChange}
+                  required
+                  className="w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            {/* Department Field - Full Width */}
+            <div>
+              <label className="text-white/80 font-medium mb-2 flex items-center space-x-2">
+                <Building className="w-4 h-4" />
+                <span>Departemen</span>
+              </label>
+              <select
+                name="department_id"
+                value={form.department_id}
+                onChange={handleChange}
+                className="w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200"
+              >
+                <option value="" className="bg-gray-800">-- Pilih Departemen --</option>
+                {departments.map((dept) => (
+                  <option key={dept.id} value={dept.id} className="bg-gray-800">
+                    {dept.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end">
+              <button
+                onClick={handleSubmit}
+                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center space-x-2"
+              >
+                <Plus className="w-5 h-5" />
+                <span>Tambah User</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
