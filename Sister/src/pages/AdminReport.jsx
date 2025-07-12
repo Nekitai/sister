@@ -89,7 +89,7 @@ export const AdminReport = () => {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 px-6 py-8">
-      <div className="w-full">
+      <div className="w-full p-10">
         {/* Alerts */}
         {errorMessage && (
           <div className="mb-6 bg-red-500/10 backdrop-blur-xl rounded-2xl border border-red-500/20 p-4">

@@ -48,8 +48,13 @@ export const Sidebar = ({ isExpanded, setIsExpanded }) => {
   }, [setIsExpanded]);
 
   const menuItems = [
-    ...(role !== "admin" ? [{ path: "/report", icon: Home, label: "Report", color: "text-blue-300" }] : []),
+    ...(role === "hrd" ? [{ path: "/laporan", label: "Laporan", icon: FileText, color: "text-yellow-300" }] : []),
+
+    // hanya tampil jika BUKAN admin DAN BUKAN hrd
+    ...(role !== "admin" && role !== "hrd" ? [{ path: "/report", icon: Home, label: "Report", color: "text-blue-300" }] : []),
+
     ...(role === "hrd" || role === "spv" ? [{ path: "/evaluation", icon: Edit, label: "Penilaian", color: "text-green-300" }] : []),
+
     ...(role === "admin"
       ? [
           { path: "/report-admin", icon: BarChart3, label: "Report", color: "text-blue-300" },
@@ -57,8 +62,8 @@ export const Sidebar = ({ isExpanded, setIsExpanded }) => {
           { path: "/departments", icon: Building, label: "Departments", color: "text-orange-300" },
         ]
       : []),
-    { path: "/laporan", icon: FileText, label: "Laporan", color: "text-yellow-300" },
-    { path: "/setting", icon: Settings, label: "Pengaturan", color: "text-gray-300" },
+
+    ...(role !== "admin" ? [{ path: "/setting", icon: Settings, label: "Pengaturan", color: "text-gray-300" }] : []),
   ];
 
   const isActiveRoute = (path) => location.pathname === path;
@@ -133,7 +138,7 @@ export const Sidebar = ({ isExpanded, setIsExpanded }) => {
             {isExpanded && <span className="font-medium text-red-300 group-hover:text-red-200">{isLoading ? "Logging out..." : "Logout"}</span>}
           </button>
         </div>
-         {isExpanded && ( 
+        {isExpanded && (
           <div className="text-xs text-center p-2">
             <p className="text-xs text-blue-100/70">Thank for ChatGpt And Claude.ai</p>
           </div>

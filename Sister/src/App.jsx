@@ -9,6 +9,7 @@ import { AdminReport } from "./pages/AdminReport";
 import { DepartmentList } from "./pages/DepartmentList";
 import EvaluationForm from "./pages/Evaluations";
 import { ProfileSecuritySettings } from "./pages/Pengaturan";
+import {EmployeePerformanceReport} from "./pages/Laporan";
 import { CircularProgress } from "@mui/material";
 
 function App() {
@@ -126,7 +127,9 @@ function App() {
           isAuthenticated && (user?.role === "spv" || user?.role === "hrd") ? (
             <div className="flex mih-h-screen">
               <Sidebar isExpanded={isSidebarOpen} setIsExpanded={setIsSidebarOpen} user={user} />
-              <EvaluationForm isSidebarOpen={isSidebarOpen} />
+              <div className={`flex-1  ${isSidebarOpen ? "ml-64" : "ml-12 "} transition-all duration-300`}>
+                <EvaluationForm isSidebarOpen={isSidebarOpen} />
+              </div>
             </div>
           ) : isAuthenticated ? (
             <Navigate to="/unauthorized" />
@@ -143,6 +146,23 @@ function App() {
               <Sidebar isExpanded={isSidebarOpen} setIsExpanded={setIsSidebarOpen} user={user} />
               <div className={`flex-1 ${isSidebarOpen ? "ml-64" : "ml-12"} transition-all duration-300`}>
                 <ProfileSecuritySettings />
+              </div>
+            </div>
+          ) : isAuthenticated ? (
+            <Navigate to="/unauthorized" />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+      <Route
+        path="/laporan"
+        element={
+          isAuthenticated && (user?.role === "spv" || user?.role === "hrd") ? (
+            <div className="flex mih-h-screen">
+              <Sidebar isExpanded={isSidebarOpen} setIsExpanded={setIsSidebarOpen} user={user} />
+              <div className={`flex-1  ${isSidebarOpen ? "ml-64" : "ml-12 "} transition-all duration-300`}>
+                <EmployeePerformanceReport isSidebarOpen={isSidebarOpen} />
               </div>
             </div>
           ) : isAuthenticated ? (

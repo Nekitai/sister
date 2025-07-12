@@ -20,4 +20,9 @@ class Dapartment extends Model
     {
         return $this->hasMany(User::class);
     }
+
+    public function employees()
+    {
+        return $this->hasMany(User::class, 'department_id');
+    }
 }

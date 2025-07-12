@@ -20,11 +20,11 @@ export default function Evaluation() {
   // Mock data for demonstration
   useEffect(() => {
     const fetchEmployees = async () => {
-      const token = localStorage.getItem("token"); // pastikan token diambil di dalam fungsi
+      const token = localStorage.getItem("token");
       if (!token) return;
 
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/create-user", {
+        const res = await fetch("http://127.0.0.1:8000/api/users", {
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: "application/json",
@@ -32,9 +32,17 @@ export default function Evaluation() {
         });
 
         const data = await res.json();
-
+        const currentUser = data.current_user; // pastikan backend kirim user login saat ini
         const usersList = data.users || data.data || [];
-        const filtered = usersList.filter((u) => u.role === "karyawan");
+
+        let filtered = [];
+
+        if (currentUser.role === "hrd") {
+          filtered = usersList.filter((u) => u.role !== "admin");
+        } else if (currentUser.role === "spv") {
+          filtered = usersList.filter((u) => u.role === "karyawan" && u.department_id === currentUser.department_id);
+        }
+
         setEmployees(filtered);
       } catch (error) {
         console.error("Gagal ambil data:", error);
@@ -123,25 +131,19 @@ export default function Evaluation() {
               <div className="flex items-center space-x-3">
                 <Check className="w-5 h-5 text-green-400" />
                 <span className="text-green-300">{successMessage}</span>
-                <button
-                  onClick={() => setSuccessMessage("")}
-                  className="ml-auto text-green-400 hover:text-green-300 transition-colors"
-                >
+                <button onClick={() => setSuccessMessage("")} className="ml-auto text-green-400 hover:text-green-300 transition-colors">
                   <X className="w-5 h-5" />
                 </button>
               </div>
             </div>
           )}
-          
+
           {errorMessage && (
             <div className="bg-red-500/10 backdrop-blur-xl rounded-2xl border border-red-500/20 p-4 mb-6">
               <div className="flex items-center space-x-3">
                 <X className="w-5 h-5 text-red-400" />
                 <span className="text-red-300">{errorMessage}</span>
-                <button
-                  onClick={() => setErrorMessage("")}
-                  className="ml-auto text-red-400 hover:text-red-300 transition-colors"
-                >
+                <button onClick={() => setErrorMessage("")} className="ml-auto text-red-400 hover:text-red-300 transition-colors">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -178,7 +180,9 @@ export default function Evaluation() {
                     required
                     className="w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200"
                   >
-                    <option value="" className="bg-gray-800 text-white">-- Pilih Karyawan --</option>
+                    <option value="" className="bg-gray-800 text-white">
+                      -- Pilih Karyawan --
+                    </option>
                     {employees.map((emp) => (
                       <option key={emp.id} value={emp.id} className="bg-gray-800 text-white">
                         {emp.name}
@@ -205,9 +209,7 @@ export default function Evaluation() {
 
               {/* Evaluation Scores */}
               <div className="space-y-4">
-                <h3 className="text-xl font-semibold text-white border-b border-white/20 pb-2">
-                  Penilaian Kinerja
-                </h3>
+                <h3 className="text-xl font-semibold text-white border-b border-white/20 pb-2">Penilaian Kinerja</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {evaluationFields.map((field) => {
                     const Icon = field.icon;

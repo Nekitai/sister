@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Eye, EyeOff, User, Shield, Save, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 
-const departments = ["IT", "HRD", "Marketing", "Keuangan"]; // contoh static
-
 export const ProfileSecuritySettings = ({ isSidebarOpen = false }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -13,7 +11,7 @@ export const ProfileSecuritySettings = ({ isSidebarOpen = false }) => {
     username: "",
     email: "",
     fullName: "",
-    department: "",
+    department_id: "",
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
@@ -29,6 +27,27 @@ export const ProfileSecuritySettings = ({ isSidebarOpen = false }) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 5000);
   };
+  const [departments, setDepartments] = useState([]);
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      const token = localStorage.getItem("token");
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/departments", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        });
+        const data = await res.json();
+        setDepartments(data.departments || data); // tergantung struktur JSON dari backend
+      } catch (err) {
+        console.error("Gagal ambil departemen:", err);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -47,7 +66,7 @@ export const ProfileSecuritySettings = ({ isSidebarOpen = false }) => {
           username: data.username,
           email: data.email,
           fullName: data.name,
-          department: data.department || "",
+          department_id: data.department_id,
         }));
       } catch (err) {
         console.error(err);
@@ -56,6 +75,21 @@ export const ProfileSecuritySettings = ({ isSidebarOpen = false }) => {
     };
     fetchProfile();
   }, []);
+  const Select = ({ label, options, value, onChange }) => (
+    <div>
+      <label className="block text-white text-sm mb-2">{label}</label>
+      <select value={value} onChange={onChange} className="w-full px-4 py-3 rounded-lg bg-white/10 text-white border border-white/20 focus:border-blue-400 focus:outline-none transition-colors">
+        <option value="">Pilih {label}</option>
+        {options.map((opt) => (
+          <option key={opt.id} value={opt.id} className="bg-gray-800">
+            {opt.name}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+  const selectedDept = departments.find((d) => d.id == formData.department_id);
+  console.log("Departemen yang dipilih:", selectedDept?.name);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -80,7 +114,7 @@ export const ProfileSecuritySettings = ({ isSidebarOpen = false }) => {
             name: formData.fullName,
             email: formData.email,
             username: formData.username,
-            department: formData.department,
+            department_id: formData.department,
           }),
         });
         if (!res.ok) {
@@ -158,7 +192,7 @@ export const ProfileSecuritySettings = ({ isSidebarOpen = false }) => {
       )}
 
       {/* Header */}
-      <div className="relative z-10">
+      <div className="relative z-10 p-10">
         <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl p-6 mb-8">
           <div className="flex items-center justify-between">
             <div>

@@ -45,7 +45,7 @@ export const Report = ({ isSidebarOpen }) => {
       </div>
 
       {/* Content */}
-      <div className="relative z-10">
+      <div className="relative z-10 p-10">
         {/* Header Section */}
         <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl shadow-2xl p-6 mb-8">
           <div className="flex items-center justify-between">

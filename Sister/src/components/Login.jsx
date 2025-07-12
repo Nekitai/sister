@@ -101,6 +101,8 @@ export const Login = ({ setIsAuthenticated, setUser }) => {
       setTimeout(() => {
         if (userData.role === "admin") {
           navigate("/report-admin");
+        } else if (userData.role === "hrd") {
+          navigate("/laporan");
         } else {
           navigate("/report");
         }

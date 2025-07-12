@@ -44,41 +44,30 @@ class userController extends Controller
             'role' => $request->role
         ], 201);
     }
-        public function index(Request $request)
-    {
-        $user = auth()->user(); // user yang sedang login
-
-        // Jika Supervisor → hanya lihat karyawan di divisinya
-        if ($user->role === 'spv') {
-            $users = User::with('department')
-                         ->where('department_id', $user->department_id)
-                         ->where('role', 'karyawan')
-                         ->get();
-        }
-
-        // Jika HRD → lihat semua karyawan & supervisor dari semua divisi
-        elseif ($user->role === 'hrd') {
-            $users = User::with('department')
-                         ->whereIn('role', ['karyawan', 'spv'])
-                         ->get();
-        }
-
-        // Jika admin → lihat semua (boleh diatur ulang jika perlu)
-        elseif ($user->role === 'admin') {
-            $users = User::with('department')->get();
-        }
-
-        // Role lainnya tidak diizinkan
-        else {
+    public function index(Request $request)
+        {
+            $user = auth()->user(); // user yang sedang login
+            if ($user->role === 'spv') {
+                $users = User::with('department')
+                             ->where('department_id', $user->department_id)
+                             ->where('role', 'karyawan')
+                             ->get();
+            } elseif ($user->role === 'hrd') {
+                $users = User::with('department')
+                             ->whereIn('role', ['karyawan', 'spv'])
+                             ->get();
+            } elseif ($user->role === 'admin') {
+                $users = User::with('department')->get();
+            } else {
+                return response()->json([
+                    'message' => 'Unauthorized'
+                ], 403);
+            }
             return response()->json([
-                'message' => 'Unauthorized'
-            ], 403);
+                'users' => $users,
+                'current_user' => $user,    
+            ], 200);
         }
-
-        return response()->json([
-            'users' => $users,
-        ], 200);
-    }
     public function delete($id)
     {
     // Cari user berdasarkan ID
